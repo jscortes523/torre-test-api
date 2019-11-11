@@ -1,5 +1,5 @@
 const fetchData = require('../lib/torre')
-
+const redisCache = require('../lib/cache')
 
 class TorreServices{
     constructor(){
@@ -9,17 +9,25 @@ class TorreServices{
     async getBio({username}){
         const _path = `bios/${username}`
         const data = await fetchData(_path)            
-        return data
+        return data || {}
     }
 
-    async getConnectionsByUsername({username, word = '', limit = ''}){
-        const _path = `people/${username}/connections?q=${word}&limit=${limit}`
-        return await fetchData(_path)
+    async getConnectionsByUsername({username}){
+        const _path = `people/${username}/connections`
+        const cacheData = await redisCache.get(_path)
+
+        if(cacheData.length > 0){
+            return cacheData
+        }else{            
+            const data = await fetchData(_path)
+            await redisCache.set(_path,data)
+            return data 
+        }
     }
 
     async searchBios({word, limit}){
         const query = `people?q=${word}&limit=${limit}`
-        return await fetchData(query)
+        return await fetchData(query) || []
     }
 }
 

@@ -9,7 +9,13 @@ const querySchema = {
     limit:joi.number().max(100)
 }
 
+const bodyFindPathSchema = {
+    usr_to: joi.string().max(100).required(),
+    usr_from:joi.string().max(100).required()
+}
+
 module.exports = {
     parameterSchema,
-    querySchema
+    querySchema,
+    bodyFindPathSchema
 }

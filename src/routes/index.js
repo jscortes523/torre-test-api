@@ -11,16 +11,17 @@ const {
 
 const {
     parameterSchema,
-    querySchema
+    bodyFindPathSchema
 } = require('../utils/schemas/request.schema')
 
 const router = express.Router()
 
 const torreServices = new TorreServices()
 
-router.get('/:username', validationHandler(parameterSchema),getBio)
+router.get('/bio/:username', validationHandler(parameterSchema),getBio)
       .get('/powerup/:username', validationHandler(parameterSchema), getTopSuggestions)
-      .get('/path/to', getPathTo)
+      .get('/path/to',validationHandler(bodyFindPathSchema, 'body'), getPathTo)
+      .get('/search',searchByName)
 
 async function getTopSuggestions(req, res, next){
     
@@ -59,8 +60,7 @@ async function getTopSuggestions(req, res, next){
 
 async function getPathTo(req, res, next){
     try {
-        const { usr_from, usr_to } = req.body
-        console.log(`${usr_from} - ${usr_to}`)
+        const { usr_from, usr_to } = req.body        
         const _path = await callBuilder(usr_from, usr_to)
 
         res.status(200).json(_path)
@@ -71,9 +71,45 @@ async function getPathTo(req, res, next){
 
 }
 
+async function searchByName(req,res, next){
+    try {
+        const { word, limit } = req.query
+        let query = {}
+        
+        if(!word){
+            query = {
+                ...query,
+                word:""
+            }
+        }else{
+            query = {
+                ...query,
+                word
+            }
+        }
+
+        if(!limit){
+            query = {
+                ...query,
+                limit:""
+            }
+        }else{
+            query={
+                ...query,
+                limit
+            }
+        }console.log('query',query)
+        const result = await torreServices.searchBios({word:query.word, limit:query.limit})
+
+        res.status(200).json(result)
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 async function getBio (req, res, next){
     const { username } = req.params
-
     const bio = await torreServices.getBio({username})
 
     res.status(200).json(bio)
