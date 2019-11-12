@@ -1,6 +1,10 @@
 const config = require('../config')
 const redis = require('redis')
-
+/**
+ * Heroku redis cache implementation to keep data in memory
+ * It help to improve fetchs api perfomance
+ * @class RedisCache
+ */
 class RedisCache{
     constructor(){
         this.redisClient = redis.createClient(config.redisUrl)
@@ -19,9 +23,12 @@ class RedisCache{
                 }
                 
                 if(result){
-                    resolve(JSON.parse(result))
+
+                    resolve({
+                        data:JSON.parse(result)
+                    })
                 }else{
-                    resolve([])
+                    resolve({})
                 }
             })
             

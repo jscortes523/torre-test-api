@@ -10,8 +10,7 @@ const {
 } = require('../utils/helpers/array.helpers')
 
 const {
-    parameterSchema,
-    bodyFindPathSchema
+    parameterSchema
 } = require('../utils/schemas/request.schema')
 
 const router = express.Router()
@@ -19,11 +18,16 @@ const router = express.Router()
 const torreServices = new TorreServices()
 
 router.get('/bio/:username', validationHandler(parameterSchema),getBio)
-      .get('/powerup/:username', validationHandler(parameterSchema), getTopSuggestions)
-      .get('/path/to',validationHandler(bodyFindPathSchema, 'body'), getPathTo)
+      .get('/heavy/people/:username', validationHandler(parameterSchema), getTopRecommendations)
+      .get('/connections', getConnectionsOf)
+      .get('/path/to', getPathTo)
       .get('/search',searchByName)
 
-async function getTopSuggestions(req, res, next){
+/**
+ * username param require
+ * /heavy/people/userExample
+ */      
+async function getTopRecommendations(req, res, next){
     
     try {         
         const { username } = req.params
@@ -34,6 +38,12 @@ async function getTopSuggestions(req, res, next){
                 const publicId = element.person.publicId
                 const degreeTwoConnections = await torreServices.getConnectionsByUsername({username:publicId})
 
+                /**
+                 * Step 1: Get first level connection using helper criteria
+                 * Step 2: Descending Sort by weight 
+                 * Step 3: transform output array elements
+                 * Steo 5: Get only top 5 element
+                 */
                 const processedConnections = degreeTwoConnections.filter( filteredDegreeTwo(publicId) )
                                             .sort( compareByWeightDescending )
                                             .map( getFormattedResponse )
@@ -58,6 +68,55 @@ async function getTopSuggestions(req, res, next){
     }
 }
 
+/**
+ * Query param is require
+ * {/connection?username=usrExample} 
+ */
+async function getConnectionsOf(req, res, next){
+    try {
+        
+        const {username} = req.query
+        let connections = await torreServices.getConnectionsByUsername({username})
+
+        /**
+         * Step 1: Get first level connections
+         * Step 2: transform ouput array
+         * Step 3: Sort array elements by weight, descending
+         * Step 4: Get only the top 5
+         */
+        connections = connections.filter( elem => elem.degrees === 1)
+                        .map( item => {
+                           return { 
+                                username: item.person.publicId,
+                                picture: item.person.picture,
+                                weight: item.person.weight
+                            }
+                        }).sort( (a,b) => b.weight - a.weight)
+                        .slice(0,10)
+        const current = await torreServices.getBio({username})
+
+        res.status(200).json({
+            current:{
+                username:username,
+                picture:current.person.picture
+            },
+            data: connections
+        })
+
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+/**
+ * Get path from current user to user target
+ * Body require
+ * {
+ *      usr_from: current_publicid
+ *      usr_to: target_publicid
+ * }
+*/
 async function getPathTo(req, res, next){
     try {
         const { usr_from, usr_to } = req.body        
@@ -71,11 +130,19 @@ async function getPathTo(req, res, next){
 
 }
 
+/**
+ * Search bios by name
+ * Query param require
+ * /search?q=name of user&limit=100
+ * If limit is undefined then It retreive 100 records
+ */
 async function searchByName(req,res, next){
     try {
         const { word, limit } = req.query
         let query = {}
         
+        //Verify if one or both of query params come
+
         if(!word){
             query = {
                 ...query,
@@ -108,6 +175,11 @@ async function searchByName(req,res, next){
     }
 }
 
+/**
+ * Get one bio record by its username/publicId
+ * param require
+ * {/bio/exampleUser}
+ */
 async function getBio (req, res, next){
     const { username } = req.params
     const bio = await torreServices.getBio({username})

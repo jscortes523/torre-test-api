@@ -1,3 +1,11 @@
+/**
+ * Filter fisrt level element
+ * Criteria:
+ * - Degree must be 1
+ * - Must have a weight
+ * - username not equal to publicId param
+ * @param {String} publicId 
+ */
 const filteredDegreeTwo = (publicId)  => {
     
     return (element) => {
@@ -9,10 +17,20 @@ const filteredDegreeTwo = (publicId)  => {
     }    
 }
 
+/**
+ * Sort by bio weight
+ * Descending
+ * @param {any} a 
+ * @param {any} b 
+ */
 const compareByWeightDescending = (a, b) => {
     return b.person.weight - a.person.weight
 }
 
+/**
+ * Transform input for a new output structure
+ * @param {any} element 
+ */
 const getFormattedResponse = (element) => {
     return {
         publicId:element.person.publicId,
