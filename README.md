@@ -21,8 +21,8 @@ Description: Get Bio by public id
 
 ```
 Method: GET
-Url: https://torre-api.herokuapp.com/api/routes/search?q=&limit=
-Query Params:  q= user name  limit= record number limit
+Url: https://torre-api.herokuapp.com/api/routes/search?word=&limit=
+Query Params:  word= user name  limit= record number limit
 Description: Get Bio by public id
 ```
 
