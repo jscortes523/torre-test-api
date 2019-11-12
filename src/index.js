@@ -2,7 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const config = require('./config')
-const suggestionsRoutes = require('./routes/suggestions.routes')
+const routes = require('./routes')
 
 //Errors
 const {
@@ -17,13 +17,14 @@ const app = express()
 //Setting up express
 app.use(bodyParser.json())
 app.use(cors())
+app.disable('x-powered-by');
 
 //variables
 const port = config.port
 
 //routes
 const router = express.Router()
-router.use('/suggestions', suggestionsRoutes)
+router.use('/routes', routes)
 app.use('/api',router)
 
 //Error middleware
